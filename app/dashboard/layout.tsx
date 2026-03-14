@@ -23,7 +23,7 @@ export default async function DashboardLayout({
         <div className="flex h-full flex-col">
           {/* Logo */}
           <div className="border-b px-6 py-5">
-            <Link href="/" className="flex items-center gap-3">
+            <Link href="/dashboard" className="flex items-center gap-3">
               <div className="rounded-lg bg-primary p-2">
                 <Activity className="h-6 w-6 text-white" />
               </div>
@@ -36,12 +36,12 @@ export default async function DashboardLayout({
 
           {/* Navigation */}
           <nav className="flex-1 space-y-1 px-3 py-4">
-            <NavLink href="/" icon={<Globe />} label="Genel Bakış" />
-            <NavLink href="/analytics" icon={<BarChart3 />} label="Analytics" />
-            <NavLink href="/uptime" icon={<Activity />} label="Uptime" />
-            <NavLink href="/errors" icon={<AlertTriangle />} label="Hatalar" />
-            <NavLink href="/chatbot" icon={<MessageSquare />} label="Chatbot" />
-            <NavLink href="/settings" icon={<Settings />} label="Ayarlar" />
+            <NavLink href="/dashboard" icon={<Globe />} label="Genel Bakış" />
+            <NavLink href="/dashboard/analytics" icon={<BarChart3 />} label="Analytics" />
+            <NavLink href="/dashboard/uptime" icon={<Activity />} label="Uptime" />
+            <NavLink href="/dashboard/errors" icon={<AlertTriangle />} label="Hatalar" />
+            <NavLink href="/dashboard/chatbot" icon={<MessageSquare />} label="Chatbot" />
+            <NavLink href="/dashboard/settings" icon={<Settings />} label="Ayarlar" />
           </nav>
 
           {/* User section */}

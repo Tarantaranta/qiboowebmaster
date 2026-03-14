@@ -93,19 +93,19 @@ export default async function DashboardPage() {
           <QuickAction
             title="Uptime Monitoring'i Başlat"
             description="Websitelerinizin çalışma durumunu otomatik kontrol edin"
-            href="/settings"
+            href="/dashboard/settings"
             badge="Yakında"
           />
           <QuickAction
             title="Analytics Script'i Ekle"
             description="Ziyaretçi istatistiklerini toplamak için tracking kodu ekleyin"
-            href="/settings"
+            href="/dashboard/settings"
             badge="Yakında"
           />
           <QuickAction
             title="Telegram Bot Kur"
             description="Anında bildirimler almak için Telegram botunu yapılandırın"
-            href="/settings"
+            href="/dashboard/settings"
             badge="Yakında"
           />
         </CardContent>
@@ -161,7 +161,7 @@ function WebsiteCard({ website }: { website: Website }) {
           domain={website.domain}
         />
       </div>
-      <Link href={`/sites/${website.domain}`}>
+      <Link href={`/dashboard/sites/${website.domain}`}>
         <CardHeader>
           <div className="flex items-start justify-between pr-8">
             <div className="space-y-1 flex-1">
