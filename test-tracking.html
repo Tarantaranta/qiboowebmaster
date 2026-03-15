@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Webmaster Tracking</title>
+    <script>
+        window.WEBMASTER_SITE_ID = 'drkeremal.com';
+        window.WEBMASTER_API_URL = 'https://qiboowebmasterapp.vercel.app';
+    </script>
+    <script src="https://qiboowebmasterapp.vercel.app/tracking/webmaster-analytics.js" async></script>
+</head>
+<body>
+    <h1>Test Webmaster Analytics & Error Tracking</h1>
+    
+    <button onclick="testError()">Trigger Test Error</button>
+    <button onclick="testPromiseRejection()">Trigger Promise Rejection</button>
+    
+    <div id="status"></div>
+    
+    <script>
+        function testError() {
+            document.getElementById('status').textContent = 'Triggering error...';
+            throw new Error('Test error from test page');
+        }
+        
+        function testPromiseRejection() {
+            document.getElementById('status').textContent = 'Triggering promise rejection...';
+            Promise.reject(new Error('Test unhandled promise rejection'));
+        }
+        
+        console.log('Test page loaded. Tracking script should be active.');
+    </script>
+</body>
+</html>
