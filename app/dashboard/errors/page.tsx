@@ -79,6 +79,18 @@ export default async function ErrorsPage() {
   const unresolvedErrors = errors?.filter(e => !e.is_resolved).length || 0
   const criticalErrors = errors?.filter(e => e.error_type === 'critical').length || 0
 
+  // Calculate error rate (errors per 100 sessions in last 7 days)
+  const { data: sessionEvents } = await supabase
+    .from('analytics_events')
+    .select('session_id', { count: 'exact', head: false })
+    .eq('event_type', 'pageview')
+    .gte('created_at', sevenDaysAgo.toISOString())
+
+  const uniqueSessions = sessionEvents ? new Set(sessionEvents.map(e => e.session_id)).size : 0
+  const errorRate = uniqueSessions > 0
+    ? ((totalErrors / uniqueSessions) * 100).toFixed(2) + '%'
+    : totalErrors > 0 ? '100%' : '0%'
+
   // Calculate chart data
   const dailyErrorData = errors ? calculateDailyErrors(errors) : []
   const errorTypeData = errors ? calculateErrorTypeBreakdown(errors) : []
@@ -115,9 +127,9 @@ export default async function ErrorsPage() {
         />
         <StatsCard
           title="Error Rate"
-          value="0.5%"
+          value={errorRate}
           icon={<TrendingDown className="h-4 w-4 text-green-500" />}
-          description="Decreasing"
+          description={`Per 100 sessions`}
         />
       </div>
 
