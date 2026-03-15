@@ -9,16 +9,15 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
-// Mock data - will be replaced with real data
-const topPages = [
-  { page: '/about', views: 1243, uniqueVisitors: 891, avgTime: '2:34' },
-  { page: '/blog/seo-tips', views: 987, uniqueVisitors: 743, avgTime: '3:12' },
-  { page: '/', views: 856, uniqueVisitors: 654, avgTime: '1:45' },
-  { page: '/contact', views: 654, uniqueVisitors: 521, avgTime: '1:23' },
-  { page: '/services', views: 543, uniqueVisitors: 432, avgTime: '2:01' },
-]
+export function TopPagesTable({ pages }: { pages?: any[] }) {
+  if (!pages || pages.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        <p>No page data yet</p>
+      </div>
+    )
+  }
 
-export function TopPagesTable() {
   return (
     <Table>
       <TableHeader>
@@ -30,8 +29,8 @@ export function TopPagesTable() {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {topPages.map((page) => (
-          <TableRow key={page.page}>
+        {pages.map((page, idx) => (
+          <TableRow key={idx}>
             <TableCell className="font-mono text-sm">{page.page}</TableCell>
             <TableCell className="text-right font-medium">{page.views.toLocaleString()}</TableCell>
             <TableCell className="text-right">{page.uniqueVisitors.toLocaleString()}</TableCell>

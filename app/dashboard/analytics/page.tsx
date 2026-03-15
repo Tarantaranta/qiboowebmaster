@@ -16,12 +16,14 @@ export default async function AnalyticsPage() {
   const sevenDaysAgo = new Date()
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
-  const { data: totalPageviews } = await supabase
+  // Get total pageviews
+  const { count: totalPageviews } = await supabase
     .from('analytics_events')
-    .select('id', { count: 'exact', head: true })
+    .select('*', { count: 'exact', head: true })
     .eq('event_type', 'pageview')
     .gte('created_at', sevenDaysAgo.toISOString())
 
+  // Get unique visitors (unique sessions)
   const { data: uniqueVisitors } = await supabase
     .from('analytics_events')
     .select('session_id')
@@ -29,6 +31,25 @@ export default async function AnalyticsPage() {
     .gte('created_at', sevenDaysAgo.toISOString())
 
   const uniqueCount = new Set(uniqueVisitors?.map(v => v.session_id) || []).size
+
+  // Get all events for charts and stats
+  const { data: allEvents } = await supabase
+    .from('analytics_events')
+    .select('*')
+    .gte('created_at', sevenDaysAgo.toISOString())
+    .order('created_at', { ascending: true })
+
+  // Calculate daily stats for chart
+  const dailyStats = calculateDailyStats(allEvents || [])
+
+  // Calculate top pages
+  const topPages = calculateTopPages(allEvents || [])
+
+  // Calculate device breakdown
+  const deviceStats = calculateDeviceBreakdown(allEvents || [])
+
+  // Calculate traffic sources
+  const trafficSources = calculateTrafficSources(allEvents || [])
 
   // Average session duration (mock for now)
   const avgDuration = '2m 34s'
@@ -50,10 +71,9 @@ export default async function AnalyticsPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Total Pageviews"
-          value={(totalPageviews as any)?.count?.toString() || '0'}
+          value={totalPageviews?.toString() || '0'}
           icon={<MousePointer className="h-4 w-4" />}
           description="Last 7 days"
-          trend="+12.5%"
         />
         <StatsCard
           title="Unique Visitors"
@@ -95,7 +115,7 @@ export default async function AnalyticsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="pl-2">
-              <VisitorChart />
+              <VisitorChart data={dailyStats} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -109,7 +129,7 @@ export default async function AnalyticsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <TopPagesTable />
+              <TopPagesTable pages={topPages} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -123,7 +143,7 @@ export default async function AnalyticsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <TrafficSources />
+              <TrafficSources sources={trafficSources} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -137,13 +157,106 @@ export default async function AnalyticsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <DeviceBreakdown />
+              <DeviceBreakdown devices={deviceStats} />
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
     </div>
   )
+}
+
+// Helper functions to process analytics data
+function calculateDailyStats(events: any[]) {
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const dailyData: Record<string, { visitors: Set<string>, pageviews: number }> = {}
+
+  events.forEach(event => {
+    if (event.event_type !== 'pageview') return
+
+    const date = new Date(event.created_at)
+    const dayName = days[date.getDay()]
+
+    if (!dailyData[dayName]) {
+      dailyData[dayName] = { visitors: new Set(), pageviews: 0 }
+    }
+
+    dailyData[dayName].visitors.add(event.session_id)
+    dailyData[dayName].pageviews++
+  })
+
+  return days.map(day => ({
+    date: day,
+    visitors: dailyData[day]?.visitors.size || 0,
+    pageviews: dailyData[day]?.pageviews || 0
+  }))
+}
+
+function calculateTopPages(events: any[]) {
+  const pageStats: Record<string, { views: number, visitors: Set<string> }> = {}
+
+  events.forEach(event => {
+    if (event.event_type !== 'pageview') return
+
+    const url = event.page_url || 'Unknown'
+    if (!pageStats[url]) {
+      pageStats[url] = { views: 0, visitors: new Set() }
+    }
+
+    pageStats[url].views++
+    pageStats[url].visitors.add(event.session_id)
+  })
+
+  return Object.entries(pageStats)
+    .map(([page, stats]) => ({
+      page,
+      views: stats.views,
+      uniqueVisitors: stats.visitors.size,
+      avgTime: '2:15' // Mock for now
+    }))
+    .sort((a, b) => b.views - a.views)
+    .slice(0, 10)
+}
+
+function calculateDeviceBreakdown(events: any[]) {
+  const deviceCounts: Record<string, number> = {}
+
+  events.forEach(event => {
+    if (event.event_type !== 'pageview') return
+    const device = event.device_type || 'unknown'
+    deviceCounts[device] = (deviceCounts[device] || 0) + 1
+  })
+
+  const total = Object.values(deviceCounts).reduce((a, b) => a + b, 0)
+
+  return Object.entries(deviceCounts).map(([name, value]) => ({
+    name: name.charAt(0).toUpperCase() + name.slice(1),
+    value,
+    color: name === 'desktop' ? 'hsl(var(--primary))' :
+           name === 'mobile' ? 'hsl(var(--destructive))' :
+           'hsl(var(--muted-foreground))'
+  }))
+}
+
+function calculateTrafficSources(events: any[]) {
+  const sourceCounts: Record<string, number> = {}
+
+  events.forEach(event => {
+    if (event.event_type !== 'pageview') return
+    const source = event.referrer || 'direct'
+    sourceCounts[source] = (sourceCounts[source] || 0) + 1
+  })
+
+  const total = Object.values(sourceCounts).reduce((a, b) => a + b, 0)
+
+  return Object.entries(sourceCounts)
+    .map(([name, visitors]) => ({
+      name: name.charAt(0).toUpperCase() + name.slice(1),
+      visitors,
+      percentage: total > 0 ? Math.round((visitors / total) * 100) : 0
+    }))
+    .sort((a, b) => b.visitors - a.visitors)
+    .slice(0, 5)
 }
 
 function StatsCard({

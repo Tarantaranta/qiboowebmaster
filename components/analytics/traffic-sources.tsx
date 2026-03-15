@@ -2,16 +2,15 @@
 
 import { Progress } from '@/components/ui/progress'
 
-// Mock data - will be replaced with real data
-const sources = [
-  { name: 'Direct', visitors: 1234, percentage: 42 },
-  { name: 'Google', visitors: 987, percentage: 34 },
-  { name: 'Social Media', visitors: 456, percentage: 15 },
-  { name: 'Referral', visitors: 234, percentage: 8 },
-  { name: 'Email', visitors: 89, percentage: 1 },
-]
+export function TrafficSources({ sources }: { sources?: any[] }) {
+  if (!sources || sources.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        <p>No traffic source data yet</p>
+      </div>
+    )
+  }
 
-export function TrafficSources() {
   return (
     <div className="space-y-4">
       {sources.map((source) => (

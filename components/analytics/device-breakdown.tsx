@@ -2,19 +2,20 @@
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
 
-// Mock data - will be replaced with real data
-const data = [
-  { name: 'Desktop', value: 45, color: 'hsl(var(--primary))' },
-  { name: 'Mobile', value: 38, color: 'hsl(var(--destructive))' },
-  { name: 'Tablet', value: 17, color: 'hsl(var(--muted-foreground))' },
-]
+export function DeviceBreakdown({ devices }: { devices?: any[] }) {
+  if (!devices || devices.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+        <p>No device data yet</p>
+      </div>
+    )
+  }
 
-export function DeviceBreakdown() {
   return (
     <ResponsiveContainer width="100%" height={300}>
       <PieChart>
         <Pie
-          data={data}
+          data={devices}
           cx="50%"
           cy="50%"
           labelLine={false}
@@ -23,7 +24,7 @@ export function DeviceBreakdown() {
           fill="#8884d8"
           dataKey="value"
         >
-          {data.map((entry, index) => (
+          {devices.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={entry.color} />
           ))}
         </Pie>
