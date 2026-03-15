@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   try {
     // Verify cron secret (security)
     const authHeader = request.headers.get('authorization')
-    const cronSecret = process.env.CRON_SECRET || 'dev-secret-change-in-production'
+    const cronSecret = (process.env.CRON_SECRET || 'dev-secret-change-in-production').trim()
 
     if (authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json(
