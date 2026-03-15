@@ -133,7 +133,7 @@ export async function GET(request: Request) {
     }
 
     // Perform actual uptime checks only for selected sites
-    let uptimeResults = []
+    let uptimeResults: any[] = []
     if (sitesToCheck.length > 0) {
       console.log(`[SMART HEALTH] Checking ${sitesToCheck.length}/${websites.length} sites`)
 
