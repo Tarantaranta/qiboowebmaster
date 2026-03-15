@@ -263,8 +263,8 @@ function WebsiteCard({ website }: { website: Website }) {
             <p className="text-sm text-muted-foreground">{website.description}</p>
             <div className="grid grid-cols-3 gap-4 pt-3 border-t">
               <div className="text-center">
-                <p className={`text-2xl font-bold ${website.stats?.uptime !== null ? 'text-green-600' : 'text-muted-foreground'}`}>
-                  {website.stats?.uptime !== null ? `${website.stats.uptime}%` : '--'}
+                <p className={`text-2xl font-bold ${website.stats?.uptime !== null && website.stats?.uptime !== undefined ? 'text-green-600' : 'text-muted-foreground'}`}>
+                  {website.stats?.uptime !== null && website.stats?.uptime !== undefined ? `${website.stats.uptime}%` : '--'}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">Uptime</p>
               </div>
