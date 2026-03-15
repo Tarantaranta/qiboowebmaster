@@ -1,7 +1,7 @@
 'use client'
 
 import { formatDistanceToNow } from 'date-fns'
-import { AlertTriangle, XCircle, CheckCircle2, ChevronDown } from 'lucide-react'
+import { AlertTriangle, XCircle, CheckCircle2, ChevronDown, Globe } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { useState } from 'react'
 
@@ -43,16 +43,24 @@ function ErrorItem({ error }: { error: any }) {
         </div>
         <div className="flex-1 space-y-2">
           <div className="flex items-start justify-between">
-            <div className="space-y-1">
+            <div className="space-y-1 flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                {error.websites && (
+                  <Badge variant="outline" className="font-normal">
+                    <Globe className="h-3 w-3 mr-1" />
+                    {error.websites.domain}
+                  </Badge>
+                )}
+                <Badge variant={error.error_type === 'critical' ? 'destructive' : 'secondary'}>
+                  {error.error_type || 'JavaScript Error'}
+                </Badge>
+              </div>
               <p className="font-medium">{error.error_message}</p>
-              <p className="text-sm text-muted-foreground font-mono">
+              <p className="text-sm text-muted-foreground font-mono truncate">
                 {error.page_url}
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <Badge variant={error.error_type === 'critical' ? 'destructive' : 'secondary'}>
-                {error.error_type || 'error'}
-              </Badge>
+            <div className="ml-2">
               <ChevronDown
                 className={`h-4 w-4 transition-transform ${expanded ? 'rotate-180' : ''}`}
               />

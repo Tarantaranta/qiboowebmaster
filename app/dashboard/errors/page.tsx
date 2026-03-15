@@ -64,7 +64,13 @@ export default async function ErrorsPage() {
 
   const { data: errors } = await supabase
     .from('error_logs')
-    .select('*')
+    .select(`
+      *,
+      websites (
+        name,
+        domain
+      )
+    `)
     .gte('created_at', sevenDaysAgo.toISOString())
     .order('created_at', { ascending: false })
     .limit(100)
