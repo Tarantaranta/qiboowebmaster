@@ -15,7 +15,7 @@
   'use strict';
 
   // Configuration
-  const API_URL = window.WEBMASTER_API_URL || 'http://localhost:3000';
+  const API_URL = window.WEBMASTER_API_URL || 'https://qiboowebmasterapp.vercel.app';
   const SITE_ID = window.WEBMASTER_SITE_ID;
 
   if (!SITE_ID) {

@@ -2,18 +2,19 @@
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
-// Mock data - will be replaced with real data
-const data = [
-  { date: 'Mon', visitors: 45, pageviews: 120 },
-  { date: 'Tue', visitors: 52, pageviews: 145 },
-  { date: 'Wed', visitors: 38, pageviews: 98 },
-  { date: 'Thu', visitors: 67, pageviews: 187 },
-  { date: 'Fri', visitors: 73, pageviews: 210 },
-  { date: 'Sat', visitors: 41, pageviews: 115 },
-  { date: 'Sun', visitors: 35, pageviews: 92 },
-]
+export function VisitorChart({ data }: { data?: any[] }) {
+  // Show message if no data
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[350px] text-muted-foreground">
+        <div className="text-center">
+          <p className="text-lg">No analytics data yet</p>
+          <p className="text-sm mt-1">Add tracking script to your websites to see data</p>
+        </div>
+      </div>
+    )
+  }
 
-export function VisitorChart() {
   return (
     <ResponsiveContainer width="100%" height={350}>
       <LineChart data={data}>
