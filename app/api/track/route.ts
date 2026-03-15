@@ -42,9 +42,30 @@ export async function POST(request: Request) {
     // TODO: Get country from IP (use a free geo-IP service or database)
     const country = null
 
+    // Find website by domain (siteId can be domain or UUID)
+    let websiteId = siteId
+
+    // If siteId looks like a domain (contains dot), find the UUID
+    if (siteId.includes('.')) {
+      const { data: website } = await supabase
+        .from('websites')
+        .select('id')
+        .eq('domain', siteId)
+        .single()
+
+      if (!website) {
+        return NextResponse.json(
+          { error: 'Website not found for domain: ' + siteId },
+          { status: 404 }
+        )
+      }
+
+      websiteId = website.id
+    }
+
     // Insert analytics event
     const { error } = await supabase.from('analytics_events').insert({
-      website_id: siteId,
+      website_id: websiteId,
       event_type: eventType,
       page_url: url,
       referrer: referrer || null,

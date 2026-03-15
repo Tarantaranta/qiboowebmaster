@@ -29,9 +29,30 @@ export async function POST(request: Request) {
       )
     }
 
+    // Find website by domain (siteId can be domain or UUID)
+    let websiteId = siteId
+
+    // If siteId looks like a domain (contains dot), find the UUID
+    if (siteId.includes('.')) {
+      const { data: website } = await supabase
+        .from('websites')
+        .select('id')
+        .eq('domain', siteId)
+        .single()
+
+      if (!website) {
+        return NextResponse.json(
+          { error: 'Website not found for domain: ' + siteId },
+          { status: 404 }
+        )
+      }
+
+      websiteId = website.id
+    }
+
     // Insert error log
     const { error } = await supabase.from('error_logs').insert({
-      website_id: siteId,
+      website_id: websiteId,
       error_type: errorType || 'JavaScript Error',
       error_message: errorMessage,
       stack_trace: stack,
@@ -55,7 +76,7 @@ export async function POST(request: Request) {
 
     // Check error rate and potentially trigger alert
     // Run asynchronously, don't wait
-    checkErrorRateAndAlert(siteId).catch(err => {
+    checkErrorRateAndAlert(websiteId).catch(err => {
       console.error('Error rate check failed:', err)
     })
 
