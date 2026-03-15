@@ -7,6 +7,54 @@ import { ErrorTypeBreakdown } from '@/components/errors/error-type-breakdown'
 
 export const dynamic = 'force-dynamic'
 
+// Helper function to calculate daily error stats
+function calculateDailyErrors(errors: any[]) {
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const dailyData: Record<string, number> = {}
+
+  errors.forEach(error => {
+    const date = new Date(error.created_at)
+    const dayName = days[date.getDay()]
+    dailyData[dayName] = (dailyData[dayName] || 0) + 1
+  })
+
+  // Get the last 7 days in order
+  const today = new Date()
+  const last7Days = []
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date(today)
+    date.setDate(date.getDate() - i)
+    const dayName = days[date.getDay()]
+    last7Days.push({
+      date: dayName,
+      errors: dailyData[dayName] || 0
+    })
+  }
+
+  return last7Days
+}
+
+// Helper function to calculate error type breakdown
+function calculateErrorTypeBreakdown(errors: any[]) {
+  const typeCount: Record<string, number> = {}
+
+  errors.forEach(error => {
+    const type = error.error_type || 'Unknown'
+    typeCount[type] = (typeCount[type] || 0) + 1
+  })
+
+  const total = errors.length
+  const breakdown = Object.entries(typeCount)
+    .map(([type, count]) => ({
+      type,
+      count,
+      percentage: total > 0 ? Math.round((count / total) * 100) : 0
+    }))
+    .sort((a, b) => b.count - a.count)
+
+  return breakdown
+}
+
 export default async function ErrorsPage() {
   const supabase = await createClient()
 
@@ -24,6 +72,10 @@ export default async function ErrorsPage() {
   const totalErrors = errors?.length || 0
   const unresolvedErrors = errors?.filter(e => !e.is_resolved).length || 0
   const criticalErrors = errors?.filter(e => e.error_type === 'critical').length || 0
+
+  // Calculate chart data
+  const dailyErrorData = errors ? calculateDailyErrors(errors) : []
+  const errorTypeData = errors ? calculateErrorTypeBreakdown(errors) : []
 
   return (
     <div className="space-y-8">
@@ -71,7 +123,7 @@ export default async function ErrorsPage() {
             <CardDescription>Daily error count over time</CardDescription>
           </CardHeader>
           <CardContent>
-            <ErrorChart />
+            <ErrorChart data={dailyErrorData} />
           </CardContent>
         </Card>
 
@@ -81,7 +133,7 @@ export default async function ErrorsPage() {
             <CardDescription>Distribution by error category</CardDescription>
           </CardHeader>
           <CardContent>
-            <ErrorTypeBreakdown />
+            <ErrorTypeBreakdown errorTypes={errorTypeData} />
           </CardContent>
         </Card>
       </div>

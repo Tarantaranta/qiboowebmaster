@@ -2,15 +2,15 @@
 
 import { Progress } from '@/components/ui/progress'
 
-// Mock data - will be replaced with real error type data
-const errorTypes = [
-  { type: 'JavaScript Error', count: 45, percentage: 42 },
-  { type: 'Network Error', count: 32, percentage: 30 },
-  { type: 'API Error', count: 18, percentage: 17 },
-  { type: 'Timeout', count: 12, percentage: 11 },
-]
+export function ErrorTypeBreakdown({ errorTypes }: { errorTypes?: any[] }) {
+  if (!errorTypes || errorTypes.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        <p>No error type data yet</p>
+      </div>
+    )
+  }
 
-export function ErrorTypeBreakdown() {
   return (
     <div className="space-y-4">
       {errorTypes.map((errorType) => (

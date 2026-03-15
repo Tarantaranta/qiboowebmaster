@@ -14,6 +14,11 @@ interface Website {
   status: 'online' | 'offline' | 'degraded' | 'unknown'
   description: string
   last_checked_at: string | null
+  stats?: {
+    visitors: number
+    errors: number
+    uptime: number | null
+  }
 }
 
 export const dynamic = 'force-dynamic'
@@ -26,6 +31,80 @@ export default async function DashboardPage() {
     .from('websites')
     .select('*')
     .order('name')
+
+  // Get today's date range
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+
+  // Fetch today's visitors (unique sessions with pageview events)
+  const { data: todayVisitors } = await supabase
+    .from('analytics_events')
+    .select('session_id')
+    .eq('event_type', 'pageview')
+    .gte('created_at', today.toISOString())
+    .lt('created_at', tomorrow.toISOString())
+
+  const uniqueVisitorsToday = todayVisitors ? new Set(todayVisitors.map(v => v.session_id)).size : 0
+
+  // Fetch active chatbot conversations (last 24 hours)
+  const last24Hours = new Date()
+  last24Hours.setHours(last24Hours.getHours() - 24)
+
+  const { count: activeChatbotCount } = await supabase
+    .from('chatbot_conversations')
+    .select('*', { count: 'exact', head: true })
+    .gte('last_message_at', last24Hours.toISOString())
+
+  // Fetch stats per website
+  const websiteStats = await Promise.all(
+    (websites || []).map(async (website) => {
+      // Get today's visitors for this website
+      const { data: siteVisitors } = await supabase
+        .from('analytics_events')
+        .select('session_id')
+        .eq('website_id', website.id)
+        .eq('event_type', 'pageview')
+        .gte('created_at', today.toISOString())
+        .lt('created_at', tomorrow.toISOString())
+
+      const visitorCount = siteVisitors ? new Set(siteVisitors.map(v => v.session_id)).size : 0
+
+      // Get unresolved errors count (last 7 days)
+      const sevenDaysAgo = new Date()
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+
+      const { count: errorCount } = await supabase
+        .from('error_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('website_id', website.id)
+        .eq('is_resolved', false)
+        .gte('created_at', sevenDaysAgo.toISOString())
+
+      // Get uptime percentage (last 7 days)
+      const { data: uptimeChecks } = await supabase
+        .from('uptime_checks')
+        .select('is_up')
+        .eq('website_id', website.id)
+        .gte('checked_at', sevenDaysAgo.toISOString())
+
+      let uptimePercentage = null
+      if (uptimeChecks && uptimeChecks.length > 0) {
+        const upCount = uptimeChecks.filter(c => c.is_up).length
+        uptimePercentage = Math.round((upCount / uptimeChecks.length) * 100)
+      }
+
+      return {
+        ...website,
+        stats: {
+          visitors: visitorCount,
+          errors: errorCount || 0,
+          uptime: uptimePercentage
+        }
+      }
+    })
+  )
 
   return (
     <div className="space-y-8">
@@ -57,15 +136,15 @@ export default async function DashboardPage() {
         />
         <StatsCard
           title="Bugünkü Ziyaretçi"
-          value="0"
+          value={uniqueVisitorsToday.toString()}
           icon={<Users className="h-4 w-4 text-blue-500" />}
-          description="Henüz veri yok"
+          description={uniqueVisitorsToday > 0 ? "Unique visitors bugün" : "Henüz veri yok"}
         />
         <StatsCard
           title="Aktif Sohbet"
-          value="0"
+          value={(activeChatbotCount || 0).toString()}
           icon={<MessageSquare className="h-4 w-4 text-purple-500" />}
-          description="Chatbot konuşmaları"
+          description="Son 24 saatte"
         />
       </div>
 
@@ -75,7 +154,7 @@ export default async function DashboardPage() {
           <h2 className="text-2xl font-semibold">Websiteleriniz ({websites?.length || 0})</h2>
         </div>
         <div className="grid gap-6 md:grid-cols-2">
-          {websites?.map((website) => (
+          {websiteStats?.map((website) => (
             <WebsiteCard key={website.id} website={website} />
           ))}
         </div>
@@ -184,15 +263,19 @@ function WebsiteCard({ website }: { website: Website }) {
             <p className="text-sm text-muted-foreground">{website.description}</p>
             <div className="grid grid-cols-3 gap-4 pt-3 border-t">
               <div className="text-center">
-                <p className="text-2xl font-bold text-green-600">--</p>
+                <p className={`text-2xl font-bold ${website.stats?.uptime !== null ? 'text-green-600' : 'text-muted-foreground'}`}>
+                  {website.stats?.uptime !== null ? `${website.stats.uptime}%` : '--'}
+                </p>
                 <p className="text-xs text-muted-foreground mt-1">Uptime</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold">0</p>
-                <p className="text-xs text-muted-foreground mt-1">Ziyaretçi</p>
+                <p className="text-2xl font-bold">{website.stats?.visitors || 0}</p>
+                <p className="text-xs text-muted-foreground mt-1">Bugün</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold">0</p>
+                <p className={`text-2xl font-bold ${(website.stats?.errors || 0) > 0 ? 'text-red-600' : ''}`}>
+                  {website.stats?.errors || 0}
+                </p>
                 <p className="text-xs text-muted-foreground mt-1">Hata</p>
               </div>
             </div>
