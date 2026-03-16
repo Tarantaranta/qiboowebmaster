@@ -42,3 +42,4 @@ next-env.d.ts
 get-chat-id.sh
 *.env*
 !.env.example
+sound-vault-*.json
