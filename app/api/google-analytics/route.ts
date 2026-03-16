@@ -103,15 +103,17 @@ export async function GET(request: Request) {
 
     // Device breakdown
     const deviceBreakdown = data.reduce((acc: any, d) => {
-      if (!acc[d.device]) acc[d.device] = 0
-      acc[d.device] += d.activeUsers
+      const device = d.device || 'unknown'
+      if (!acc[device]) acc[device] = 0
+      acc[device] += d.activeUsers
       return acc
     }, {})
 
     // Country breakdown (top 10)
     const countryData = data.reduce((acc: any, d) => {
-      if (!acc[d.country]) acc[d.country] = 0
-      acc[d.country] += d.activeUsers
+      const country = d.country || 'unknown'
+      if (!acc[country]) acc[country] = 0
+      acc[country] += d.activeUsers
       return acc
     }, {})
 
