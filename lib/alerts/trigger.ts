@@ -230,7 +230,7 @@ export async function checkErrorRateAndAlert(websiteId: string) {
       .select('*')
       .eq('website_id', websiteId)
       .eq('alert_type', 'high_error_rate')
-      .gte('sent_at', oneHourAgo.toISOString())
+      .gte('created_at', oneHourAgo.toISOString())
 
     if (!recentAlerts || recentAlerts.length === 0) {
       const { data: website } = await supabase

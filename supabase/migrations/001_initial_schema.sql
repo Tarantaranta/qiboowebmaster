@@ -1,6 +1,7 @@
 -- =============================================
 -- WEBMASTER DASHBOARD - DATABASE SCHEMA
 -- =============================================
+-- This migration is idempotent - safe to run multiple times.
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -8,7 +9,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- =============================================
 -- 1. WEBSITES TABLE
 -- =============================================
-CREATE TABLE websites (
+CREATE TABLE IF NOT EXISTS websites (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
   domain TEXT NOT NULL UNIQUE,
@@ -24,7 +25,7 @@ CREATE TABLE websites (
 -- =============================================
 -- 2. UPTIME CHECKS TABLE
 -- =============================================
-CREATE TABLE uptime_checks (
+CREATE TABLE IF NOT EXISTS uptime_checks (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   website_id UUID NOT NULL REFERENCES websites(id) ON DELETE CASCADE,
   status_code INTEGER,
@@ -37,13 +38,13 @@ CREATE TABLE uptime_checks (
 );
 
 -- Index for faster queries
-CREATE INDEX idx_uptime_checks_website_id ON uptime_checks(website_id);
-CREATE INDEX idx_uptime_checks_checked_at ON uptime_checks(checked_at DESC);
+CREATE INDEX IF NOT EXISTS idx_uptime_checks_website_id ON uptime_checks(website_id);
+CREATE INDEX IF NOT EXISTS idx_uptime_checks_checked_at ON uptime_checks(checked_at DESC);
 
 -- =============================================
 -- 3. ANALYTICS EVENTS TABLE
 -- =============================================
-CREATE TABLE analytics_events (
+CREATE TABLE IF NOT EXISTS analytics_events (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   website_id UUID NOT NULL REFERENCES websites(id) ON DELETE CASCADE,
   event_type TEXT NOT NULL CHECK (event_type IN ('pageview', 'click', 'custom')),
@@ -63,15 +64,15 @@ CREATE TABLE analytics_events (
 );
 
 -- Indexes for analytics queries
-CREATE INDEX idx_analytics_events_website_id ON analytics_events(website_id);
-CREATE INDEX idx_analytics_events_created_at ON analytics_events(created_at DESC);
-CREATE INDEX idx_analytics_events_session_id ON analytics_events(session_id);
-CREATE INDEX idx_analytics_events_event_type ON analytics_events(event_type);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_website_id ON analytics_events(website_id);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_created_at ON analytics_events(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_session_id ON analytics_events(session_id);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_event_type ON analytics_events(event_type);
 
 -- =============================================
 -- 4. CHATBOT CONVERSATIONS TABLE
 -- =============================================
-CREATE TABLE chatbot_conversations (
+CREATE TABLE IF NOT EXISTS chatbot_conversations (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   website_id UUID NOT NULL REFERENCES websites(id) ON DELETE CASCADE,
   session_id TEXT NOT NULL,
@@ -86,14 +87,14 @@ CREATE TABLE chatbot_conversations (
 );
 
 -- Indexes for chatbot queries
-CREATE INDEX idx_chatbot_conversations_website_id ON chatbot_conversations(website_id);
-CREATE INDEX idx_chatbot_conversations_session_id ON chatbot_conversations(session_id);
-CREATE INDEX idx_chatbot_conversations_started_at ON chatbot_conversations(started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_chatbot_conversations_website_id ON chatbot_conversations(website_id);
+CREATE INDEX IF NOT EXISTS idx_chatbot_conversations_session_id ON chatbot_conversations(session_id);
+CREATE INDEX IF NOT EXISTS idx_chatbot_conversations_started_at ON chatbot_conversations(started_at DESC);
 
 -- =============================================
 -- 5. ERROR LOGS TABLE
 -- =============================================
-CREATE TABLE error_logs (
+CREATE TABLE IF NOT EXISTS error_logs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   website_id UUID NOT NULL REFERENCES websites(id) ON DELETE CASCADE,
   error_type TEXT NOT NULL,
@@ -112,15 +113,15 @@ CREATE TABLE error_logs (
 );
 
 -- Indexes for error logs
-CREATE INDEX idx_error_logs_website_id ON error_logs(website_id);
-CREATE INDEX idx_error_logs_created_at ON error_logs(created_at DESC);
-CREATE INDEX idx_error_logs_is_resolved ON error_logs(is_resolved);
-CREATE INDEX idx_error_logs_severity ON error_logs(severity);
+CREATE INDEX IF NOT EXISTS idx_error_logs_website_id ON error_logs(website_id);
+CREATE INDEX IF NOT EXISTS idx_error_logs_created_at ON error_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_error_logs_is_resolved ON error_logs(is_resolved);
+CREATE INDEX IF NOT EXISTS idx_error_logs_severity ON error_logs(severity);
 
 -- =============================================
 -- 6. ALERT SETTINGS TABLE
 -- =============================================
-CREATE TABLE alert_settings (
+CREATE TABLE IF NOT EXISTS alert_settings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   website_id UUID NOT NULL REFERENCES websites(id) ON DELETE CASCADE,
   alert_type TEXT NOT NULL CHECK (alert_type IN ('uptime', 'error', 'traffic_spike', 'ssl_expiry')),
@@ -137,7 +138,7 @@ CREATE TABLE alert_settings (
 -- =============================================
 -- 7. VERCEL DEPLOYMENTS TABLE
 -- =============================================
-CREATE TABLE vercel_deployments (
+CREATE TABLE IF NOT EXISTS vercel_deployments (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   website_id UUID NOT NULL REFERENCES websites(id) ON DELETE CASCADE,
   deployment_id TEXT NOT NULL UNIQUE,
@@ -152,13 +153,13 @@ CREATE TABLE vercel_deployments (
 );
 
 -- Index for deployments
-CREATE INDEX idx_vercel_deployments_website_id ON vercel_deployments(website_id);
-CREATE INDEX idx_vercel_deployments_created_at ON vercel_deployments(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_vercel_deployments_website_id ON vercel_deployments(website_id);
+CREATE INDEX IF NOT EXISTS idx_vercel_deployments_created_at ON vercel_deployments(created_at DESC);
 
 -- =============================================
 -- 8. ALERT HISTORY TABLE
 -- =============================================
-CREATE TABLE alert_history (
+CREATE TABLE IF NOT EXISTS alert_history (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   website_id UUID NOT NULL REFERENCES websites(id) ON DELETE CASCADE,
   alert_type TEXT NOT NULL,
@@ -171,20 +172,21 @@ CREATE TABLE alert_history (
 );
 
 -- Index for alert history
-CREATE INDEX idx_alert_history_website_id ON alert_history(website_id);
-CREATE INDEX idx_alert_history_created_at ON alert_history(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_alert_history_website_id ON alert_history(website_id);
+CREATE INDEX IF NOT EXISTS idx_alert_history_created_at ON alert_history(created_at DESC);
 
 -- =============================================
--- INITIAL DATA - INSERT 4 WEBSITES
+-- INITIAL DATA - INSERT 4 WEBSITES (idempotent)
 -- =============================================
 INSERT INTO websites (name, domain, description) VALUES
   ('Dr. Kerem Al', 'drkeremal.com', 'Kişisel website'),
   ('Gong Sahne', 'gongsahne.com', 'Sanat ve kültür platformu'),
   ('Anitya Cave House', 'anityacavehouse.com', 'Otel ve rezervasyon'),
-  ('Qiboo AI', 'qiboo.ai', 'AI chatbot platformu');
+  ('Qiboo AI', 'qiboo.ai', 'AI chatbot platformu')
+ON CONFLICT (domain) DO NOTHING;
 
 -- =============================================
--- DEFAULT ALERT SETTINGS FOR ALL WEBSITES
+-- DEFAULT ALERT SETTINGS FOR ALL WEBSITES (idempotent)
 -- =============================================
 INSERT INTO alert_settings (website_id, alert_type, enabled, telegram_enabled, email_enabled, threshold)
 SELECT
@@ -202,7 +204,8 @@ SELECT
 FROM websites
 CROSS JOIN (
   VALUES ('uptime'), ('error'), ('traffic_spike'), ('ssl_expiry')
-) AS alert_types(alert_type);
+) AS alert_types(alert_type)
+ON CONFLICT (website_id, alert_type) DO NOTHING;
 
 -- =============================================
 -- USEFUL FUNCTIONS
@@ -251,8 +254,7 @@ $$ LANGUAGE plpgsql;
 -- =============================================
 -- ROW LEVEL SECURITY (RLS) - Optional
 -- =============================================
--- Eğer multi-user olsaydı RLS eklenirdi
--- Şimdilik tek admin olduğu için gerek yok
+-- Multi-user RLS not needed currently (single admin)
 
 COMMENT ON TABLE websites IS 'Monitored websites';
 COMMENT ON TABLE uptime_checks IS 'Historical uptime check results';

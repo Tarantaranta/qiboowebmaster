@@ -1,11 +1,12 @@
 -- =============================================
 -- SEO TABLES FOR ADVANCED ANALYSIS
 -- =============================================
+-- This migration is idempotent - safe to run multiple times.
 
 -- =============================================
 -- 1. KEYWORDS TABLE
 -- =============================================
-CREATE TABLE keywords (
+CREATE TABLE IF NOT EXISTS keywords (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   website_id UUID NOT NULL REFERENCES websites(id) ON DELETE CASCADE,
   keyword TEXT NOT NULL,
@@ -22,13 +23,13 @@ CREATE TABLE keywords (
   UNIQUE(website_id, keyword)
 );
 
-CREATE INDEX idx_keywords_website_id ON keywords(website_id);
-CREATE INDEX idx_keywords_tracking ON keywords(is_tracking) WHERE is_tracking = TRUE;
+CREATE INDEX IF NOT EXISTS idx_keywords_website_id ON keywords(website_id);
+CREATE INDEX IF NOT EXISTS idx_keywords_tracking ON keywords(is_tracking) WHERE is_tracking = TRUE;
 
 -- =============================================
 -- 2. KEYWORD POSITIONS HISTORY
 -- =============================================
-CREATE TABLE keyword_positions (
+CREATE TABLE IF NOT EXISTS keyword_positions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   keyword_id UUID NOT NULL REFERENCES keywords(id) ON DELETE CASCADE,
   rank_position INTEGER NOT NULL,
@@ -37,13 +38,13 @@ CREATE TABLE keyword_positions (
   search_engine TEXT DEFAULT 'google'
 );
 
-CREATE INDEX idx_keyword_positions_keyword_id ON keyword_positions(keyword_id);
-CREATE INDEX idx_keyword_positions_checked_at ON keyword_positions(checked_at DESC);
+CREATE INDEX IF NOT EXISTS idx_keyword_positions_keyword_id ON keyword_positions(keyword_id);
+CREATE INDEX IF NOT EXISTS idx_keyword_positions_checked_at ON keyword_positions(checked_at DESC);
 
 -- =============================================
 -- 3. SEO AUDITS TABLE
 -- =============================================
-CREATE TABLE seo_audits (
+CREATE TABLE IF NOT EXISTS seo_audits (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   website_id UUID NOT NULL REFERENCES websites(id) ON DELETE CASCADE,
   url TEXT NOT NULL,
@@ -66,13 +67,13 @@ CREATE TABLE seo_audits (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_seo_audits_website_id ON seo_audits(website_id);
-CREATE INDEX idx_seo_audits_created_at ON seo_audits(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_seo_audits_website_id ON seo_audits(website_id);
+CREATE INDEX IF NOT EXISTS idx_seo_audits_created_at ON seo_audits(created_at DESC);
 
 -- =============================================
 -- 4. BACKLINKS TABLE
 -- =============================================
-CREATE TABLE backlinks (
+CREATE TABLE IF NOT EXISTS backlinks (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   website_id UUID NOT NULL REFERENCES websites(id) ON DELETE CASCADE,
   source_url TEXT NOT NULL,
@@ -87,13 +88,13 @@ CREATE TABLE backlinks (
   UNIQUE(website_id, source_url, target_url)
 );
 
-CREATE INDEX idx_backlinks_website_id ON backlinks(website_id);
-CREATE INDEX idx_backlinks_is_active ON backlinks(is_active) WHERE is_active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_backlinks_website_id ON backlinks(website_id);
+CREATE INDEX IF NOT EXISTS idx_backlinks_is_active ON backlinks(is_active) WHERE is_active = TRUE;
 
 -- =============================================
 -- 5. COMPETITORS TABLE
 -- =============================================
-CREATE TABLE competitors (
+CREATE TABLE IF NOT EXISTS competitors (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   website_id UUID NOT NULL REFERENCES websites(id) ON DELETE CASCADE,
   competitor_domain TEXT NOT NULL,
@@ -106,12 +107,12 @@ CREATE TABLE competitors (
   UNIQUE(website_id, competitor_domain)
 );
 
-CREATE INDEX idx_competitors_website_id ON competitors(website_id);
+CREATE INDEX IF NOT EXISTS idx_competitors_website_id ON competitors(website_id);
 
 -- =============================================
 -- 6. SEO RECOMMENDATIONS TABLE (AI-POWERED)
 -- =============================================
-CREATE TABLE seo_recommendations (
+CREATE TABLE IF NOT EXISTS seo_recommendations (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   website_id UUID NOT NULL REFERENCES websites(id) ON DELETE CASCADE,
   url TEXT,
@@ -127,14 +128,14 @@ CREATE TABLE seo_recommendations (
   ai_generated BOOLEAN DEFAULT FALSE
 );
 
-CREATE INDEX idx_seo_recommendations_website_id ON seo_recommendations(website_id);
-CREATE INDEX idx_seo_recommendations_priority ON seo_recommendations(priority);
-CREATE INDEX idx_seo_recommendations_implemented ON seo_recommendations(is_implemented);
+CREATE INDEX IF NOT EXISTS idx_seo_recommendations_website_id ON seo_recommendations(website_id);
+CREATE INDEX IF NOT EXISTS idx_seo_recommendations_priority ON seo_recommendations(priority);
+CREATE INDEX IF NOT EXISTS idx_seo_recommendations_implemented ON seo_recommendations(is_implemented);
 
 -- =============================================
 -- 7. CONTENT SUGGESTIONS TABLE (AI)
 -- =============================================
-CREATE TABLE content_suggestions (
+CREATE TABLE IF NOT EXISTS content_suggestions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   website_id UUID NOT NULL REFERENCES websites(id) ON DELETE CASCADE,
   topic TEXT NOT NULL,
@@ -149,8 +150,8 @@ CREATE TABLE content_suggestions (
   created_url TEXT
 );
 
-CREATE INDEX idx_content_suggestions_website_id ON content_suggestions(website_id);
-CREATE INDEX idx_content_suggestions_created ON content_suggestions(is_created);
+CREATE INDEX IF NOT EXISTS idx_content_suggestions_website_id ON content_suggestions(website_id);
+CREATE INDEX IF NOT EXISTS idx_content_suggestions_created ON content_suggestions(is_created);
 
 -- =============================================
 -- USEFUL FUNCTIONS FOR SEO
