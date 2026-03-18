@@ -52,14 +52,20 @@ async function fetchGA4Data(propertyId: string) {
   }
 }
 
-export default async function SiteDashboard({ params }: { params: { domain: string } }) {
+export default async function SiteDashboard({
+  params
+}: {
+  params: Promise<{ domain: string }>
+}) {
+  // Next.js 15+ requires awaiting params
+  const { domain } = await params
   const supabase = await createClient()
 
   // Fetch website by domain
   const { data: website } = await supabase
     .from('websites')
     .select('*')
-    .eq('domain', params.domain)
+    .eq('domain', domain)
     .single()
 
   if (!website) {
@@ -131,7 +137,7 @@ export default async function SiteDashboard({ params }: { params: { domain: stri
   const totalPageviews = todayEvents?.filter(e => e.event_type === 'pageview').length || 0
 
   // Fetch GA4 data
-  const propertyId = getPropertyIdForDomain(params.domain)
+  const propertyId = getPropertyIdForDomain(domain)
   const ga4Data = propertyId ? await fetchGA4Data(propertyId) : null
 
   // Determine chatbot health status
