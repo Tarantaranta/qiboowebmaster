@@ -83,7 +83,14 @@ export async function fetchSearchQueries(
       },
     })
 
-    return response.data.rows || []
+    const rows = response.data.rows || []
+    return rows.map(row => ({
+      keys: row.keys || [],
+      clicks: row.clicks || 0,
+      impressions: row.impressions || 0,
+      ctr: row.ctr || 0,
+      position: row.position || 0,
+    }))
   } catch (error: any) {
     console.error('Search Console API error:', error.message)
 
