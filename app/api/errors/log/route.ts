@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
       }, { status: 400 })
     }
 
-    const supabase = await createClient()
+    const supabase = createServiceRoleClient()
     const { websiteId, errorType, errorMessage, stackTrace, pageUrl, userAgent } = data
 
     // Insert error log
