@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Activity, BarChart3, MessageSquare, Settings, AlertTriangle, Globe, LogOut, Eye, Zap, Shield, GitBranch, Radio, Search, Target, FileText } from 'lucide-react'
+import { Activity, BarChart3, MessageSquare, Settings, AlertTriangle, Globe, LogOut, Eye, Zap, Shield, GitBranch, Radio, Search, Target, FileText, PlayCircle } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 
@@ -47,6 +47,7 @@ export default async function DashboardLayout({
             <NavLink href="/dashboard/seo" icon={<Search />} label="SEO Dashboard" />
             <NavLink href="/dashboard/keywords" icon={<Target />} label="Keywords" />
             <NavLink href="/dashboard/reports" icon={<FileText />} label="Reports" />
+            <NavLink href="/dashboard/actions" icon={<PlayCircle />} label="Manual Actions" />
             <NavLink href="/dashboard/errors" icon={<AlertTriangle />} label="Hatalar" />
             <NavLink href="/dashboard/chatbot" icon={<MessageSquare />} label="Chatbot" />
             <NavLink href="/dashboard/settings" icon={<Settings />} label="Ayarlar" />
