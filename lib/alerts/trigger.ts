@@ -183,11 +183,10 @@ async function logAlert(
   await supabase.from('alert_history').insert({
     website_id: websiteId,
     alert_type: alertType,
-    sent_at: new Date().toISOString(),
-    channels: {
-      telegram: metadata.telegram_sent || false,
-      email: metadata.email_sent || false
-    },
+    sent_via: [
+      ...(metadata.telegram_sent ? ['telegram'] : []),
+      ...(metadata.email_sent ? ['email'] : [])
+    ],
     metadata
   })
 }

@@ -6,6 +6,7 @@ import { VisitorChart } from '@/components/analytics/visitor-chart'
 import { TopPagesTable } from '@/components/analytics/top-pages-table'
 import { DeviceBreakdown } from '@/components/analytics/device-breakdown'
 import { TrafficSources } from '@/components/analytics/traffic-sources'
+import { calculateBounceRate, calculateSessionDuration } from '@/lib/analytics/metrics'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,8 +14,10 @@ export default async function AnalyticsPage() {
   const supabase = await createClient()
 
   // Fetch analytics data (last 7 days)
-  const sevenDaysAgo = new Date()
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+  const endDate = new Date()
+  const startDate = new Date()
+  startDate.setDate(startDate.getDate() - 7)
+  const sevenDaysAgo = startDate
 
   // Get total pageviews
   const { count: totalPageviews } = await supabase
@@ -51,11 +54,38 @@ export default async function AnalyticsPage() {
   // Calculate traffic sources
   const trafficSources = calculateTrafficSources(allEvents || [])
 
-  // Average session duration (mock for now)
-  const avgDuration = '2m 34s'
+  // Calculate real bounce rate and session duration (all websites combined)
+  const websites = await supabase.from('websites').select('id')
+  const websiteIds = websites.data?.map(w => w.id) || []
 
-  // Bounce rate (mock for now)
-  const bounceRate = '42%'
+  // Calculate metrics for all websites (we'll aggregate them)
+  const metricsPromises = websiteIds.map(id =>
+    Promise.all([
+      calculateBounceRate(id, startDate, endDate),
+      calculateSessionDuration(id, startDate, endDate)
+    ])
+  )
+
+  const allMetrics = await Promise.all(metricsPromises)
+
+  // Aggregate bounce rate (weighted average)
+  const totalSessions = allMetrics.reduce((sum, [bounce]) => sum + bounce.totalSessions, 0)
+  const totalBounced = allMetrics.reduce((sum, [bounce]) => sum + bounce.bouncedSessions, 0)
+  const aggregateBounceRate = totalSessions > 0
+    ? Math.round((totalBounced / totalSessions) * 100)
+    : 0
+
+  // Aggregate session duration (simple average of averages)
+  const allDurations = allMetrics.map(([_, duration]) => duration.averageDuration).filter(d => d > 0)
+  const aggregateAvgDuration = allDurations.length > 0
+    ? Math.round(allDurations.reduce((sum, d) => sum + d, 0) / allDurations.length)
+    : 0
+
+  const avgDuration = allDurations.length > 0
+    ? allMetrics[0][1].formattedAverage.replace(/\d+/, String(Math.floor(aggregateAvgDuration / 60))).replace(/s$/, `${aggregateAvgDuration % 60}s`)
+    : '0s'
+
+  const bounceRate = `${aggregateBounceRate}%`
 
   return (
     <div className="space-y-8">

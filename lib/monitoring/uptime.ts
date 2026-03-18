@@ -9,6 +9,7 @@ export interface UptimeCheckResult {
   response_time: number
   error_message: string | null
   previous_status: string
+  downtime_started_at: string | null
 }
 
 export async function checkWebsiteUptime(
@@ -55,7 +56,8 @@ export async function checkWebsiteUptime(
     status_code: statusCode,
     response_time: responseTime,
     error_message: errorMessage,
-    previous_status: '' // Will be filled later
+    previous_status: '', // Will be filled later
+    downtime_started_at: null // Will be filled later
   }
 }
 
@@ -65,7 +67,7 @@ export async function performUptimeChecks(): Promise<UptimeCheckResult[]> {
   // Fetch all websites
   const { data: websites, error } = await supabase
     .from('websites')
-    .select('id, name, domain, status')
+    .select('id, name, domain, status, downtime_started_at')
 
   if (error || !websites) {
     console.error('Failed to fetch websites:', error)
@@ -82,6 +84,7 @@ export async function performUptimeChecks(): Promise<UptimeCheckResult[]> {
       website.name
     )
     result.previous_status = website.status
+    result.downtime_started_at = website.downtime_started_at
     results.push(result)
 
     // Save to database
@@ -96,12 +99,23 @@ export async function performUptimeChecks(): Promise<UptimeCheckResult[]> {
 
     // Update website status
     const newStatus = result.is_up ? 'online' : 'offline'
+    const updateData: any = {
+      status: newStatus,
+      last_checked_at: new Date().toISOString()
+    }
+
+    // Track downtime start/end
+    if (!result.is_up && website.status !== 'offline') {
+      // Just went offline - mark downtime start
+      updateData.downtime_started_at = new Date().toISOString()
+    } else if (result.is_up && website.status === 'offline') {
+      // Just recovered - clear downtime start
+      updateData.downtime_started_at = null
+    }
+
     await supabase
       .from('websites')
-      .update({
-        status: newStatus,
-        last_checked_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', website.id)
   }
 

@@ -124,6 +124,7 @@ export async function POST(request: Request) {
         .from('chatbot_conversations')
         .update({
           messages,
+          message_count: messages.length,
           last_message_at: new Date().toISOString()
         })
         .eq('website_id', siteId)

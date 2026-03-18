@@ -45,11 +45,17 @@ export async function GET(request: Request) {
       } else {
         // Recovery detected
         console.log(`✅ RECOVERED: ${change.website_name} (${change.domain})`)
+
+        // Get actual downtime start time (if available)
+        const downtimeStart = change.downtime_started_at
+          ? new Date(change.downtime_started_at)
+          : new Date() // Fallback to now if not tracked
+
         const alertSent = await triggerRecoveryAlert(
           change.website_id,
           change.website_name,
           change.domain,
-          new Date() // TODO: Get actual downtime start time from database
+          downtimeStart
         )
         alertResults.push({ type: 'recovery', website: change.website_name, alertSent })
       }
