@@ -6,7 +6,19 @@
     },
     {
       "path": "/api/cron/uptime-check",
-      "schedule": "0 0 * * *"
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/search-console-sync",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/pagespeed-check",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/weekly-reports",
+      "schedule": "0 9 * * 1"
     }
   ]
 }
