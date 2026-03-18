@@ -141,16 +141,40 @@ async function runComprehensiveAudit() {
   console.log('\n📊 === TESTING ANALYTICS ENDPOINTS ===\n')
 
   const analyticsEndpoints = [
-    '/api/analytics/track',
-    '/api/errors/log',
-    '/api/performance/metrics'
+    {
+      path: '/api/analytics/track',
+      body: {
+        websiteId: 'test-id',
+        pageUrl: 'https://test.com',
+        eventType: 'pageview',
+        sessionId: 'test-session'
+      }
+    },
+    {
+      path: '/api/errors/log',
+      body: {
+        websiteId: 'test-id',
+        errorMessage: 'Test error',
+        pageUrl: 'https://test.com',
+        errorType: 'JavaScript'
+      }
+    },
+    {
+      path: '/api/performance/metrics',
+      body: {
+        websiteId: 'test-id',
+        pageUrl: 'https://test.com',
+        metricName: 'LCP',
+        metricValue: 2500
+      }
+    }
   ]
 
   for (const endpoint of analyticsEndpoints) {
-    await testEndpoint(`Analytics: ${endpoint}`, `${BASE_URL}${endpoint}`, {
+    await testEndpoint(`Analytics: ${endpoint.path}`, `${BASE_URL}${endpoint.path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ test: true })
+      body: JSON.stringify(endpoint.body)
     })
   }
 

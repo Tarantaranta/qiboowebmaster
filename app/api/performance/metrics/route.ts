@@ -3,9 +3,16 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createClient()
     const data = await req.json()
 
+    // Validation
+    if (!data.websiteId || !data.pageUrl || !data.metricName || data.metricValue === undefined) {
+      return NextResponse.json({
+        error: 'Missing required fields: websiteId, pageUrl, metricName, metricValue'
+      }, { status: 400 })
+    }
+
+    const supabase = await createClient()
     const { websiteId, pageUrl, metricName, metricValue, rating } = data
 
     // Insert performance metric

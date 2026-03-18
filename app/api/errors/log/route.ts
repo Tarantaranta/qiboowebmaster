@@ -3,9 +3,16 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createClient()
     const data = await req.json()
 
+    // Validation
+    if (!data.websiteId || !data.errorMessage || !data.pageUrl) {
+      return NextResponse.json({
+        error: 'Missing required fields: websiteId, errorMessage, pageUrl'
+      }, { status: 400 })
+    }
+
+    const supabase = await createClient()
     const { websiteId, errorType, errorMessage, stackTrace, pageUrl, userAgent } = data
 
     // Insert error log
