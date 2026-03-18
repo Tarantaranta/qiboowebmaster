@@ -9,7 +9,8 @@
     "lint": "eslint",
     "migrate": "node scripts/run-migrations.js",
     "db:password": "node scripts/get-db-password.js",
-    "sync-data": "node scripts/sync-initial-data.js"
+    "sync-data": "node scripts/sync-initial-data.js",
+    "test:all": "node scripts/comprehensive-test.js"
   },
   "dependencies": {
     "@google-analytics/data": "^5.2.1",
