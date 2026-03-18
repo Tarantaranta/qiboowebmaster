@@ -153,6 +153,7 @@ export default async function SiteDashboard({
       icon: CheckCircle2,
       color: 'text-green-600',
       bgColor: 'bg-green-50 border-green-200',
+      textColor: 'text-green-900',
       badge: 'default' as const,
       label: 'Aktif ✓',
       description: 'Chatbot normal çalışıyor'
@@ -161,6 +162,7 @@ export default async function SiteDashboard({
       icon: Clock,
       color: 'text-gray-600',
       bgColor: 'bg-gray-50 border-gray-200',
+      textColor: 'text-gray-900',
       badge: 'secondary' as const,
       label: 'Beklemede',
       description: 'Son 1 saatte aktivite yok'
@@ -169,6 +171,7 @@ export default async function SiteDashboard({
       icon: XCircle,
       color: 'text-red-600',
       bgColor: 'bg-red-50 border-red-200',
+      textColor: 'text-red-900',
       badge: 'destructive' as const,
       label: 'Hata!',
       description: `${chatbotErrors} çözülmemiş hata`
@@ -200,17 +203,17 @@ export default async function SiteDashboard({
             <div className="flex items-center gap-3">
               <ChatbotIcon className={`h-6 w-6 ${chatbotConfig.color}`} />
               <div>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className={`flex items-center gap-2 ${chatbotConfig.textColor}`}>
                   Chatbot Durumu
                   <Badge variant={chatbotConfig.badge}>{chatbotConfig.label}</Badge>
                 </CardTitle>
-                <CardDescription className="mt-1">
+                <CardDescription className={`mt-1 ${chatbotConfig.textColor} opacity-80`}>
                   {chatbotConfig.description}
                 </CardDescription>
               </div>
             </div>
             {chatbotStatus === 'active' && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className={`flex items-center gap-2 text-sm ${chatbotConfig.textColor} opacity-70`}>
                 <Activity className="h-4 w-4 text-green-500 animate-pulse" />
                 Son 1 saatte {activeChatbotConversations} etkileşim
               </div>
