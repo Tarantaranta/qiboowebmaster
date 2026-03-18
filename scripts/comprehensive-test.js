@@ -56,6 +56,9 @@ async function runComprehensiveAudit() {
 
   console.log(`🔍 Testing: ${BASE_URL}\n`)
 
+  // Use a valid UUID format for testing (this is a dummy UUID, database may reject it, but syntax will be correct)
+  const testWebsiteId = '00000000-0000-0000-0000-000000000000'
+
   // ==========================================
   // 1. DASHBOARD PAGES
   // ==========================================
@@ -118,9 +121,9 @@ async function runComprehensiveAudit() {
   console.log('\n🧪 === TESTING TEST ENDPOINTS ===\n')
 
   const testEndpoints = [
-    { path: '/api/test/chatbot', method: 'POST', body: { domain: 'drkeremal.com', websiteId: 'test' } },
-    { path: '/api/test/calendar', method: 'POST', body: { domain: 'drkeremal.com', websiteId: 'test' } },
-    { path: '/api/test/ssl', method: 'POST', body: { domain: 'drkeremal.com', websiteId: 'test' } }
+    { path: '/api/test/chatbot', method: 'POST', body: { domain: 'drkeremal.com', websiteId: testWebsiteId } },
+    { path: '/api/test/calendar', method: 'POST', body: { domain: 'drkeremal.com', websiteId: testWebsiteId } },
+    { path: '/api/test/ssl', method: 'POST', body: { domain: 'drkeremal.com', websiteId: testWebsiteId } }
   ]
 
   for (const endpoint of testEndpoints) {
@@ -144,7 +147,7 @@ async function runComprehensiveAudit() {
     {
       path: '/api/analytics/track',
       body: {
-        websiteId: 'test-id',
+        websiteId: testWebsiteId,
         pageUrl: 'https://test.com',
         eventType: 'pageview',
         sessionId: 'test-session'
@@ -153,7 +156,7 @@ async function runComprehensiveAudit() {
     {
       path: '/api/errors/log',
       body: {
-        websiteId: 'test-id',
+        websiteId: testWebsiteId,
         errorMessage: 'Test error',
         pageUrl: 'https://test.com',
         errorType: 'JavaScript'
@@ -162,7 +165,7 @@ async function runComprehensiveAudit() {
     {
       path: '/api/performance/metrics',
       body: {
-        websiteId: 'test-id',
+        websiteId: testWebsiteId,
         pageUrl: 'https://test.com',
         metricName: 'LCP',
         metricValue: 2500
@@ -186,7 +189,7 @@ async function runComprehensiveAudit() {
   await testEndpoint('Reports: Generate', `${BASE_URL}/api/reports/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ websiteId: 'test', metrics: ['traffic'], format: 'csv' })
+    body: JSON.stringify({ websiteId: testWebsiteId, metrics: ['traffic'], format: 'csv' })
   })
 
   // ==========================================
