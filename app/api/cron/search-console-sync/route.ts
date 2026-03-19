@@ -48,7 +48,7 @@ export async function GET(request: Request) {
             body: JSON.stringify({
               websiteId: website.id,
               days: 7, // Fetch last 7 days
-              useDomainProperty: false, // Use https:// property by default
+              useDomainProperty: true, // Use sc-domain: format (covers all protocols and subdomains)
             }),
           }
         )
