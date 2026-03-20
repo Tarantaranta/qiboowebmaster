@@ -84,7 +84,7 @@ export async function POST(request: Request) {
         ctr: row.ctr || 0,
         position: row.position || 0,
         date: endDateStr,
-        country: row.keys[1] || null,
+        country: row.keys[1] ? String(row.keys[1]).substring(0, 10) : null, // Truncate to max 10 chars
         device: row.keys[2] || null,
       }))
 
@@ -118,7 +118,7 @@ export async function POST(request: Request) {
         ctr: row.ctr || 0,
         position: row.position || 0,
         date: endDateStr,
-        country: row.keys[1] || null,
+        country: row.keys[1] ? String(row.keys[1]).substring(0, 10) : null, // Truncate to max 10 chars
         device: row.keys[2] || null,
       }))
 
