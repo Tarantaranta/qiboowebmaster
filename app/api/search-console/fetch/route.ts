@@ -88,7 +88,9 @@ export async function POST(request: Request) {
         device: row.keys[2] || null,
       }))
 
-      const { error: queryError, count } = await supabase
+      console.log(`[Search Console] Attempting to insert ${queryData.length} queries...`)
+
+      const { error: queryError, count, data: insertedData } = await supabase
         .from('search_console_queries')
         .upsert(queryData, {
           onConflict: 'website_id,query,date,country,device',
@@ -96,10 +98,12 @@ export async function POST(request: Request) {
         })
         .select()
 
+      console.log(`[Search Console] Upsert result - count: ${count}, data length: ${insertedData?.length}, error:`, queryError)
+
       if (queryError) {
         console.error('[Search Console] Query insert error:', queryError)
       } else {
-        queriesInserted = count || queryData.length
+        queriesInserted = insertedData?.length || count || queryData.length
       }
     }
 
@@ -118,7 +122,9 @@ export async function POST(request: Request) {
         device: row.keys[2] || null,
       }))
 
-      const { error: pageError, count } = await supabase
+      console.log(`[Search Console] Attempting to insert ${pageData.length} pages...`)
+
+      const { error: pageError, count, data: insertedData } = await supabase
         .from('search_console_pages')
         .upsert(pageData, {
           onConflict: 'website_id,page_url,date,country,device',
@@ -126,10 +132,12 @@ export async function POST(request: Request) {
         })
         .select()
 
+      console.log(`[Search Console] Upsert result - count: ${count}, data length: ${insertedData?.length}, error:`, pageError)
+
       if (pageError) {
         console.error('[Search Console] Page insert error:', pageError)
       } else {
-        pagesInserted = count || pageData.length
+        pagesInserted = insertedData?.length || count || pageData.length
       }
     }
 
