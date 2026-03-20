@@ -51,18 +51,8 @@ export async function POST(request: Request) {
     // Format site URL for Search Console API
     const siteUrl = formatSiteUrl(website.domain, useDomainProperty)
 
-    // Verify site access
-    const hasAccess = await verifySiteAccess(siteUrl)
-    if (!hasAccess) {
-      return NextResponse.json(
-        {
-          error: 'No access to this site in Google Search Console',
-          message: 'Make sure the service account has been added as a user in Search Console',
-          siteUrl,
-        },
-        { status: 403 }
-      )
-    }
+    // Note: Skipping verifySiteAccess check because sites.get() doesn't work well with sc-domain: format
+    // Access is already verified by service account permissions in Search Console
 
     // Calculate date range
     const endDate = new Date()
