@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
 
 export const metadata = {
   title: 'Settings - Webmaster Dashboard',
@@ -6,7 +6,7 @@ export const metadata = {
 }
 
 export default async function SettingsPage() {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   const { data: websites } = await supabase
     .from('websites')

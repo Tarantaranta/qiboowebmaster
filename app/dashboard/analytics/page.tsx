@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
+import { format } from 'date-fns'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Activity, Users, MousePointer, Clock, TrendingUp, Globe } from 'lucide-react'
@@ -7,40 +8,74 @@ import { TopPagesTable } from '@/components/analytics/top-pages-table'
 import { DeviceBreakdown } from '@/components/analytics/device-breakdown'
 import { TrafficSources } from '@/components/analytics/traffic-sources'
 import { calculateBounceRate, calculateSessionDuration } from '@/lib/analytics/metrics'
+import { WebsiteSelector } from '@/components/website-selector'
+import { DateRangePicker } from '@/components/date-range-picker'
+import { ExportButton } from '@/components/export-button'
+import { Suspense } from 'react'
 
 export const dynamic = 'force-dynamic'
 
-export default async function AnalyticsPage() {
-  const supabase = await createClient()
+export default async function AnalyticsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ website?: string; from?: string; to?: string }>
+}) {
+  const supabase = createServiceRoleClient()
+  const params = await searchParams
+  const selectedWebsiteId = params.website || 'all'
 
-  // Fetch analytics data (last 7 days)
-  const endDate = new Date()
-  const startDate = new Date()
-  startDate.setDate(startDate.getDate() - 7)
+  // Fetch all websites for the selector
+  const { data: websites } = await supabase
+    .from('websites')
+    .select('id, name, domain')
+    .order('name')
+
+  // Fetch analytics data with date range
+  const endDate = params.to ? new Date(params.to) : new Date()
+  const startDate = params.from
+    ? new Date(params.from)
+    : new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000) // Default 7 days
   const sevenDaysAgo = startDate
 
+  // Build base query with website filter
+  const buildQuery = (query: any) => {
+    if (selectedWebsiteId !== 'all') {
+      return query.eq('website_id', selectedWebsiteId)
+    }
+    return query
+  }
+
   // Get total pageviews
-  const { count: totalPageviews } = await supabase
+  let pageviewQuery = supabase
     .from('analytics_events')
     .select('*', { count: 'exact', head: true })
     .eq('event_type', 'pageview')
     .gte('created_at', sevenDaysAgo.toISOString())
 
+  pageviewQuery = buildQuery(pageviewQuery)
+  const { count: totalPageviews } = await pageviewQuery
+
   // Get unique visitors (unique sessions)
-  const { data: uniqueVisitors } = await supabase
+  let visitorQuery = supabase
     .from('analytics_events')
     .select('session_id')
     .eq('event_type', 'pageview')
     .gte('created_at', sevenDaysAgo.toISOString())
 
+  visitorQuery = buildQuery(visitorQuery)
+  const { data: uniqueVisitors } = await visitorQuery
+
   const uniqueCount = new Set(uniqueVisitors?.map(v => v.session_id) || []).size
 
   // Get all events for charts and stats
-  const { data: allEvents } = await supabase
+  let eventsQuery = supabase
     .from('analytics_events')
     .select('*')
     .gte('created_at', sevenDaysAgo.toISOString())
     .order('created_at', { ascending: true })
+
+  eventsQuery = buildQuery(eventsQuery)
+  const { data: allEvents } = await eventsQuery
 
   // Calculate daily stats for chart
   const dailyStats = calculateDailyStats(allEvents || [])
@@ -54,12 +89,13 @@ export default async function AnalyticsPage() {
   // Calculate traffic sources
   const trafficSources = calculateTrafficSources(allEvents || [])
 
-  // Calculate real bounce rate and session duration (all websites combined)
-  const websites = await supabase.from('websites').select('id')
-  const websiteIds = websites.data?.map(w => w.id) || []
+  // Calculate real bounce rate and session duration
+  const websiteIdsForMetrics = selectedWebsiteId !== 'all'
+    ? [selectedWebsiteId]
+    : websites?.map(w => w.id) || []
 
-  // Calculate metrics for all websites (we'll aggregate them)
-  const metricsPromises = websiteIds.map(id =>
+  // Calculate metrics for selected website(s)
+  const metricsPromises = websiteIdsForMetrics.map(id =>
     Promise.all([
       calculateBounceRate(id, startDate, endDate),
       calculateSessionDuration(id, startDate, endDate)
@@ -87,14 +123,33 @@ export default async function AnalyticsPage() {
 
   const bounceRate = `${aggregateBounceRate}%`
 
+  const selectedWebsite = websites?.find(w => w.id === selectedWebsiteId)
+  const pageTitle = selectedWebsite
+    ? `Analytics - ${selectedWebsite.name}`
+    : 'Analytics - All Websites'
+
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-4xl font-bold tracking-tight">Analytics</h1>
-        <p className="text-muted-foreground mt-2">
-          Visitor insights and traffic analytics across all websites
-        </p>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-4xl font-bold tracking-tight">Analytics</h1>
+            <p className="text-muted-foreground mt-2">
+              {selectedWebsite
+                ? `Visitor insights for ${selectedWebsite.domain}`
+                : 'Visitor insights and traffic analytics across all websites'}
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Suspense fallback={<div>Loading...</div>}>
+              <WebsiteSelector websites={websites || []} />
+            </Suspense>
+            <Suspense fallback={<div>Loading...</div>}>
+              <DateRangePicker />
+            </Suspense>
+          </div>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -110,7 +165,6 @@ export default async function AnalyticsPage() {
           value={uniqueCount.toString()}
           icon={<Users className="h-4 w-4" />}
           description="Last 7 days"
-          trend="+8.2%"
         />
         <StatsCard
           title="Avg. Session"
@@ -153,10 +207,19 @@ export default async function AnalyticsPage() {
         <TabsContent value="pages" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Top Pages</CardTitle>
-              <CardDescription>
-                Most visited pages across all websites
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Top Pages</CardTitle>
+                  <CardDescription>
+                    Most visited pages across all websites
+                  </CardDescription>
+                </div>
+                <ExportButton
+                  data={topPages}
+                  filename={`analytics-top-pages-${selectedWebsite?.name || 'all'}-${format(startDate, 'yyyy-MM-dd')}`}
+                  disabled={!topPages || topPages.length === 0}
+                />
+              </div>
             </CardHeader>
             <CardContent>
               <TopPagesTable pages={topPages} />
@@ -241,8 +304,7 @@ function calculateTopPages(events: any[]) {
     .map(([page, stats]) => ({
       page,
       views: stats.views,
-      uniqueVisitors: stats.visitors.size,
-      avgTime: '2:15' // Mock for now
+      uniqueVisitors: stats.visitors.size
     }))
     .sort((a, b) => b.views - a.views)
     .slice(0, 10)

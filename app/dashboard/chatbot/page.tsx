@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -32,7 +32,7 @@ interface ChatbotStats {
 }
 
 export default async function ChatbotPage() {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   // Fetch all websites
   const { data: websites } = await supabase
@@ -297,7 +297,7 @@ function ChatbotSiteCard({ stat }: { stat: ChatbotStats }) {
                 {config.label}
               </Badge>
             </div>
-            <div className="grid grid-cols-4 gap-4 mt-2 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2 text-sm">
               <div>
                 <p className="text-muted-foreground text-xs">Konuşmalar</p>
                 <p className="font-semibold">{stat.total_conversations}</p>

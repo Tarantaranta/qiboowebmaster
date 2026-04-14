@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -10,7 +10,7 @@ import { CheckRanksButton } from '@/components/seo/check-ranks-button'
 export const dynamic = 'force-dynamic'
 
 export default async function KeywordsPage() {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   // Get all websites
   const { data: websites } = await supabase

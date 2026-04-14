@@ -24,8 +24,7 @@ export function TopPagesTable({ pages }: { pages?: any[] }) {
         <TableRow>
           <TableHead>Page</TableHead>
           <TableHead className="text-right">Views</TableHead>
-          <TableHead className="text-right">Unique</TableHead>
-          <TableHead className="text-right">Avg. Time</TableHead>
+          <TableHead className="text-right">Unique Visitors</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -34,7 +33,6 @@ export function TopPagesTable({ pages }: { pages?: any[] }) {
             <TableCell className="font-mono text-sm">{page.page}</TableCell>
             <TableCell className="text-right font-medium">{page.views.toLocaleString()}</TableCell>
             <TableCell className="text-right">{page.uniqueVisitors.toLocaleString()}</TableCell>
-            <TableCell className="text-right text-muted-foreground">{page.avgTime}</TableCell>
           </TableRow>
         ))}
       </TableBody>

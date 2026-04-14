@@ -1,9 +1,14 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertTriangle, XCircle, Clock, TrendingDown } from 'lucide-react'
 import { ErrorsList } from '@/components/errors/errors-list'
 import { ErrorChart } from '@/components/errors/error-chart'
 import { ErrorTypeBreakdown } from '@/components/errors/error-type-breakdown'
+import { WebsiteSelector } from '@/components/website-selector'
+import { DateRangePicker } from '@/components/date-range-picker'
+import { ExportButton } from '@/components/export-button'
+import { format } from 'date-fns'
+import { Suspense } from 'react'
 
 export const dynamic = 'force-dynamic'
 
@@ -55,14 +60,28 @@ function calculateErrorTypeBreakdown(errors: any[]) {
   return breakdown
 }
 
-export default async function ErrorsPage() {
-  const supabase = await createClient()
+export default async function ErrorsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ website?: string; from?: string; to?: string }>
+}) {
+  const supabase = createServiceRoleClient()
+  const params = await searchParams
+  const selectedWebsiteId = params.website || 'all'
 
-  // Fetch errors (last 7 days)
-  const sevenDaysAgo = new Date()
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+  // Fetch all websites for the selector
+  const { data: websites } = await supabase
+    .from('websites')
+    .select('id, name, domain')
+    .order('name')
 
-  const { data: errors } = await supabase
+  // Fetch errors with date range from URL params
+  const endDate = params.to ? new Date(params.to) : new Date()
+  const startDate = params.from
+    ? new Date(params.from)
+    : new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000)
+
+  let errorsQuery = supabase
     .from('error_logs')
     .select(`
       *,
@@ -71,20 +90,34 @@ export default async function ErrorsPage() {
         domain
       )
     `)
-    .gte('created_at', sevenDaysAgo.toISOString())
+    .gte('created_at', startDate.toISOString())
     .order('created_at', { ascending: false })
     .limit(100)
+
+  // Apply website filter if specific website selected
+  if (selectedWebsiteId !== 'all') {
+    errorsQuery = errorsQuery.eq('website_id', selectedWebsiteId)
+  }
+
+  const { data: errors } = await errorsQuery
 
   const totalErrors = errors?.length || 0
   const unresolvedErrors = errors?.filter(e => !e.is_resolved).length || 0
   const criticalErrors = errors?.filter(e => e.error_type === 'critical').length || 0
 
   // Calculate error rate (errors per 100 sessions in last 7 days)
-  const { data: sessionEvents } = await supabase
+  let sessionQuery = supabase
     .from('analytics_events')
     .select('session_id', { count: 'exact', head: false })
     .eq('event_type', 'pageview')
-    .gte('created_at', sevenDaysAgo.toISOString())
+    .gte('created_at', startDate.toISOString())
+
+  // Apply website filter if specific website selected
+  if (selectedWebsiteId !== 'all') {
+    sessionQuery = sessionQuery.eq('website_id', selectedWebsiteId)
+  }
+
+  const { data: sessionEvents } = await sessionQuery
 
   const uniqueSessions = sessionEvents ? new Set(sessionEvents.map(e => e.session_id)).size : 0
   const errorRate = uniqueSessions > 0
@@ -95,14 +128,28 @@ export default async function ErrorsPage() {
   const dailyErrorData = errors ? calculateDailyErrors(errors) : []
   const errorTypeData = errors ? calculateErrorTypeBreakdown(errors) : []
 
+  const selectedWebsite = websites?.find(w => w.id === selectedWebsiteId)
+
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-4xl font-bold tracking-tight">Error Tracking</h1>
-        <p className="text-muted-foreground mt-2">
-          Monitor and resolve errors across all websites
-        </p>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-4xl font-bold tracking-tight">Error Tracking</h1>
+          <p className="text-muted-foreground mt-2">
+            {selectedWebsite
+              ? `Monitor and resolve errors for ${selectedWebsite.domain}`
+              : 'Monitor and resolve errors across all websites'}
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Suspense fallback={<div>Loading...</div>}>
+            <DateRangePicker />
+          </Suspense>
+          <Suspense fallback={<div>Loading...</div>}>
+            <WebsiteSelector websites={websites || []} />
+          </Suspense>
+        </div>
       </div>
 
       {/* Stats */}
@@ -111,7 +158,7 @@ export default async function ErrorsPage() {
           title="Total Errors"
           value={totalErrors.toString()}
           icon={<AlertTriangle className="h-4 w-4" />}
-          description="Last 7 days"
+          description={`${format(startDate, 'MMM d')} - ${format(endDate, 'MMM d')}`}
         />
         <StatsCard
           title="Unresolved"
@@ -159,10 +206,27 @@ export default async function ErrorsPage() {
       {/* Errors List */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Errors</CardTitle>
-          <CardDescription>
-            Latest errors from all websites (last 100)
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Recent Errors</CardTitle>
+              <CardDescription>
+                Latest errors from all websites (last 100)
+              </CardDescription>
+            </div>
+            <ExportButton
+              data={errors?.map(err => ({
+                website: err.websites?.name || 'Unknown',
+                domain: err.websites?.domain || '',
+                error_type: err.error_type,
+                error_message: err.error_message,
+                page_url: err.page_url,
+                is_resolved: err.is_resolved,
+                created_at: err.created_at,
+              })) || []}
+              filename={`errors-${selectedWebsite?.name || 'all'}-${format(startDate, 'yyyy-MM-dd')}-to-${format(endDate, 'yyyy-MM-dd')}`}
+              disabled={!errors || errors.length === 0}
+            />
+          </div>
         </CardHeader>
         <CardContent>
           <ErrorsList errors={errors || []} />

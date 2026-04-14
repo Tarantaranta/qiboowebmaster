@@ -1,15 +1,16 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { redirect } from 'next/navigation'
-import { Activity, BarChart3, MessageSquare, Settings, AlertTriangle, Globe, LogOut, Eye, Zap, Shield, GitBranch, Radio, Search, Target, FileText, PlayCircle } from 'lucide-react'
+import { Activity, BarChart3, MessageSquare, Settings, AlertTriangle, Globe, LogOut, Eye, Zap, Shield, GitBranch, Radio, Search, Target, FileText, PlayCircle, BookOpen } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { NavLink } from '@/components/nav-link'
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
@@ -47,6 +48,7 @@ export default async function DashboardLayout({
             <NavLink href="/dashboard/seo" icon={<Search />} label="SEO Dashboard" />
             <NavLink href="/dashboard/keywords" icon={<Target />} label="Keywords" />
             <NavLink href="/dashboard/reports" icon={<FileText />} label="Reports" />
+            <NavLink href="/dashboard/research" icon={<BookOpen />} label="Research" />
             <NavLink href="/dashboard/actions" icon={<PlayCircle />} label="Manual Actions" />
             <NavLink href="/dashboard/errors" icon={<AlertTriangle />} label="Hatalar" />
             <NavLink href="/dashboard/chatbot" icon={<MessageSquare />} label="Chatbot" />
@@ -82,14 +84,3 @@ export default async function DashboardLayout({
   )
 }
 
-function NavLink({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
-  return (
-    <Link
-      href={href}
-      className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-    >
-      <span className="h-5 w-5">{icon}</span>
-      {label}
-    </Link>
-  )
-}

@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -18,7 +18,7 @@ import Link from 'next/link'
 export const dynamic = 'force-dynamic'
 
 export default async function SEODashboardPage() {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   // Get all websites
   const { data: websites } = await supabase
@@ -185,7 +185,7 @@ export default async function SEODashboardPage() {
 
                 {/* Search Console Tab */}
                 <TabsContent value="search-console" className="space-y-4">
-                  <div className="grid grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <MetricBox
                       label="Clicks"
                       value={searchConsole.clicks.toLocaleString()}
@@ -239,7 +239,7 @@ export default async function SEODashboardPage() {
 
                 {/* Keywords Tab */}
                 <TabsContent value="keywords" className="space-y-4">
-                  <div className="grid grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <MetricBox
                       label="Total Keywords"
                       value={keywords.total.toString()}
@@ -314,7 +314,7 @@ export default async function SEODashboardPage() {
                 <TabsContent value="audit" className="space-y-4">
                   {audit ? (
                     <>
-                      <div className="grid grid-cols-4 gap-4">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <MetricBox
                           label="SEO Score"
                           value={audit.score.toString()}

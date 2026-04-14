@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -30,7 +30,7 @@ const DEFAULT_FUNNELS = [
 ]
 
 export default async function FunnelsPage() {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   // Get all websites
   const { data: websites } = await supabase

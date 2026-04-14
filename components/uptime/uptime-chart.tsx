@@ -1,22 +1,28 @@
 'use client'
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { CheckCircle2 } from 'lucide-react'
 
-// Mock data - will be replaced with real uptime data
-const data = [
-  { date: 'Jan 15', uptime: 99.9 },
-  { date: 'Jan 16', uptime: 100 },
-  { date: 'Jan 17', uptime: 99.8 },
-  { date: 'Jan 18', uptime: 100 },
-  { date: 'Jan 19', uptime: 98.5 },
-  { date: 'Jan 20', uptime: 100 },
-  { date: 'Jan 21', uptime: 99.9 },
-  { date: 'Jan 22', uptime: 100 },
-  { date: 'Jan 23', uptime: 100 },
-  { date: 'Jan 24', uptime: 99.7 },
-]
+interface UptimeDataPoint {
+  date: string
+  uptime: number
+}
 
-export function UptimeChart() {
+interface UptimeChartProps {
+  data?: UptimeDataPoint[]
+}
+
+export function UptimeChart({ data }: UptimeChartProps) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex h-[250px] flex-col items-center justify-center text-muted-foreground">
+        <CheckCircle2 className="h-12 w-12 mb-2 text-green-500" />
+        <p>No uptime data available yet</p>
+        <p className="text-xs mt-1">Data will appear after uptime checks are performed</p>
+      </div>
+    )
+  }
+
   return (
     <ResponsiveContainer width="100%" height={250}>
       <BarChart data={data}>

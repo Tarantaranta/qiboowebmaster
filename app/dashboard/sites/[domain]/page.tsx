@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { notFound } from 'next/navigation'
@@ -59,7 +59,7 @@ export default async function SiteDashboard({
 }) {
   // Next.js 15+ requires awaiting params
   const { domain } = await params
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   // Fetch website by domain
   const { data: website } = await supabase

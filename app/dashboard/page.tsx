@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Activity, TrendingUp, Users, MessageSquare, Globe, Clock, AlertCircle } from 'lucide-react'
@@ -24,7 +24,7 @@ interface Website {
 export const dynamic = 'force-dynamic'
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   // Fetch all websites
   const { data: websites } = await supabase

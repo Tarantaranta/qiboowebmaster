@@ -1,18 +1,28 @@
 'use client'
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { Activity } from 'lucide-react'
 
-// Mock data - will be replaced with real response time data
-const data = [
-  { time: '00:00', ms: 234 },
-  { time: '04:00', ms: 189 },
-  { time: '08:00', ms: 267 },
-  { time: '12:00', ms: 312 },
-  { time: '16:00', ms: 289 },
-  { time: '20:00', ms: 245 },
-]
+interface ResponseTimeDataPoint {
+  time: string
+  ms: number
+}
 
-export function ResponseTimeChart() {
+interface ResponseTimeChartProps {
+  data?: ResponseTimeDataPoint[]
+}
+
+export function ResponseTimeChart({ data }: ResponseTimeChartProps) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex h-[250px] flex-col items-center justify-center text-muted-foreground">
+        <Activity className="h-12 w-12 mb-2" />
+        <p>No response time data available yet</p>
+        <p className="text-xs mt-1">Data will appear after uptime checks are performed</p>
+      </div>
+    )
+  }
+
   return (
     <ResponsiveContainer width="100%" height={250}>
       <LineChart data={data}>
@@ -37,8 +47,9 @@ export function ResponseTimeChart() {
         <Line
           type="monotone"
           dataKey="ms"
-          stroke="hsl(var(--destructive))"
+          stroke="hsl(var(--primary))"
           strokeWidth={2}
+          dot={{ fill: 'hsl(var(--primary))' }}
         />
       </LineChart>
     </ResponsiveContainer>

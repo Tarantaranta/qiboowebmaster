@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Shield, AlertTriangle, CheckCircle, XCircle, Clock } from 'lucide-react'
@@ -7,7 +7,7 @@ import { checkSSLCertificate, getSSLStatus } from '@/lib/monitoring/ssl'
 export const dynamic = 'force-dynamic'
 
 export default async function SSLPage() {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   // Get all websites
   const { data: websites } = await supabase
@@ -15,7 +15,7 @@ export default async function SSLPage() {
     .select('*')
     .order('name')
 
-  // Check SSL for each website and get latest from database
+  // Get latest SSL check from database for each website
   const sslData = await Promise.all(
     (websites || []).map(async (website) => {
       // Get latest SSL check from database
@@ -27,27 +27,28 @@ export default async function SSLPage() {
         .limit(1)
         .single()
 
-      // Perform live check
-      const liveCheck = await checkSSLCertificate(website.domain)
-
-      // Save to database
-      if (liveCheck.validTo) {
-        await supabase.from('ssl_certificates').insert({
-          website_id: website.id,
-          domain: website.domain,
-          issuer: liveCheck.issuer,
-          valid_from: liveCheck.validFrom ? new Date(liveCheck.validFrom).toISOString() : null,
-          valid_to: liveCheck.validTo ? new Date(liveCheck.validTo).toISOString() : null,
-          days_until_expiry: liveCheck.daysUntilExpiry,
-          is_valid: liveCheck.isValid,
-          error_message: liveCheck.error || null
-        })
+      // Use database data instead of live check
+      // SSL checks should be performed by the cron job
+      const sslInfo = latestCheck ? {
+        issuer: latestCheck.issuer,
+        validFrom: latestCheck.valid_from,
+        validTo: latestCheck.valid_to,
+        daysUntilExpiry: latestCheck.days_until_expiry,
+        isValid: latestCheck.is_valid,
+        error: latestCheck.error_message
+      } : {
+        issuer: 'Unknown',
+        validFrom: null,
+        validTo: null,
+        daysUntilExpiry: 0,
+        isValid: false,
+        error: 'No SSL data available'
       }
 
       return {
         ...website,
-        ssl: liveCheck,
-        previousCheck: latestCheck
+        ssl: sslInfo,
+        lastChecked: latestCheck?.checked_at
       }
     })
   )

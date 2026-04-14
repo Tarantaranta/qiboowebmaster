@@ -2,67 +2,75 @@
 
 import { AlertTriangle, CheckCircle2, Clock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { formatDistanceToNow } from 'date-fns'
 
-// Mock data - will be replaced with real incident data
-const incidents = [
-  {
-    id: 1,
-    website: 'drkeremal.com',
-    type: 'downtime',
-    message: 'Server not responding',
-    duration: '12 minutes',
-    status: 'resolved',
-    timestamp: '2 hours ago',
-  },
-  {
-    id: 2,
-    website: 'qiboo.ai',
-    type: 'slow_response',
-    message: 'High response time (>2s)',
-    duration: '45 minutes',
-    status: 'resolved',
-    timestamp: '5 hours ago',
-  },
-]
+interface Incident {
+  id: string
+  website_name: string
+  website_domain: string
+  started_at: string
+  resolved_at?: string | null
+  duration_minutes?: number
+  error_message?: string
+}
 
-export function IncidentsList() {
-  if (incidents.length === 0) {
+interface IncidentsListProps {
+  incidents?: Incident[]
+}
+
+export function IncidentsList({ incidents }: IncidentsListProps) {
+  if (!incidents || incidents.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
         <CheckCircle2 className="h-12 w-12 mx-auto mb-2 text-green-500" />
-        <p>No incidents in the last 7 days</p>
+        <p>No incidents in the last 30 days</p>
+        <p className="text-xs mt-1">All systems operating normally</p>
       </div>
     )
   }
 
   return (
     <div className="space-y-4">
-      {incidents.map((incident) => (
-        <div
-          key={incident.id}
-          className="flex items-start gap-4 p-4 border rounded-lg"
-        >
-          <div className="mt-1">
-            <AlertTriangle className="h-5 w-5 text-yellow-500" />
-          </div>
-          <div className="flex-1 space-y-1">
-            <div className="flex items-center justify-between">
-              <p className="font-medium">{incident.website}</p>
-              <Badge variant={incident.status === 'resolved' ? 'secondary' : 'destructive'}>
-                {incident.status}
-              </Badge>
+      {incidents.map((incident) => {
+        const isResolved = !!incident.resolved_at
+        const duration = incident.duration_minutes
+          ? `${incident.duration_minutes} minutes`
+          : 'Ongoing'
+
+        return (
+          <div
+            key={incident.id}
+            className="flex items-start gap-4 p-4 border rounded-lg"
+          >
+            <div className="mt-1">
+              <AlertTriangle className={`h-5 w-5 ${isResolved ? 'text-yellow-500' : 'text-red-500'}`} />
             </div>
-            <p className="text-sm text-muted-foreground">{incident.message}</p>
-            <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
-              <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {incident.duration}
-              </span>
-              <span>{incident.timestamp}</span>
+            <div className="flex-1 space-y-1">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">{incident.website_name}</p>
+                  <p className="text-xs text-muted-foreground font-mono">{incident.website_domain}</p>
+                </div>
+                <Badge variant={isResolved ? 'secondary' : 'destructive'}>
+                  {isResolved ? 'Resolved' : 'Active'}
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {incident.error_message || 'Server not responding'}
+              </p>
+              <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {duration}
+                </span>
+                <span>
+                  {formatDistanceToNow(new Date(incident.started_at), { addSuffix: true })}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

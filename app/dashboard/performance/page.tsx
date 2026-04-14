@@ -1,13 +1,21 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { TrendingUp, TrendingDown, Minus, Zap, Activity, Clock, Gauge } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, Zap, Activity, Clock, Gauge, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
+import { WebsiteSelector } from '@/components/website-selector'
+import { Suspense } from 'react'
 
 export const dynamic = 'force-dynamic'
 
-export default async function PerformancePage() {
-  const supabase = await createClient()
+export default async function PerformancePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ website?: string }>
+}) {
+  const supabase = createServiceRoleClient()
+  const params = await searchParams
+  const selectedWebsiteId = params.website || 'all'
 
   // Get all websites
   const { data: websites } = await supabase
@@ -15,9 +23,14 @@ export default async function PerformancePage() {
     .select('*')
     .order('name')
 
+  // Filter websites if specific one is selected
+  const websitesToShow = selectedWebsiteId !== 'all'
+    ? websites?.filter(w => w.id === selectedWebsiteId) || []
+    : websites || []
+
   // Get latest PageSpeed audits for each website
   const performanceData = await Promise.all(
-    (websites || []).map(async (website) => {
+    websitesToShow.map(async (website) => {
       // Latest mobile audit
       const { data: mobileAudit } = await supabase
         .from('pagespeed_audits')
@@ -85,14 +98,23 @@ export default async function PerformancePage() {
     .filter(p => p.desktopAudit)
     .reduce((sum, p) => sum + (p.desktopAudit?.performance_score || 0), 0) / totalAudits || 0
 
+  const selectedWebsite = websites?.find(w => w.id === selectedWebsiteId)
+
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-4xl font-bold tracking-tight">Performance</h1>
-        <p className="text-muted-foreground mt-2">
-          Core Web Vitals and PageSpeed Insights for all websites
-        </p>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-4xl font-bold tracking-tight">Performance</h1>
+          <p className="text-muted-foreground mt-2">
+            {selectedWebsite
+              ? `Core Web Vitals and PageSpeed Insights for ${selectedWebsite.domain}`
+              : 'Core Web Vitals and PageSpeed Insights for all websites'}
+          </p>
+        </div>
+        <Suspense fallback={<div>Loading...</div>}>
+          <WebsiteSelector websites={websites || []} />
+        </Suspense>
       </div>
 
       {/* Overall Stats */}
@@ -265,7 +287,7 @@ function PerformanceCard({ site }: { site: any }) {
         {Object.keys(site.vitals).length > 0 && (
           <div>
             <h4 className="text-sm font-medium mb-3">Core Web Vitals (7 days avg)</h4>
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
               {['LCP', 'INP', 'CLS', 'TTFB', 'FCP'].map((metric) => {
                 const vital = site.vitals[metric]
                 if (!vital) return null
@@ -280,6 +302,53 @@ function PerformanceCard({ site }: { site: any }) {
                   </div>
                 )
               })}
+            </div>
+          </div>
+        )}
+
+        {/* Performance Opportunities */}
+        {site.mobileAudit?.opportunities && site.mobileAudit.opportunities.length > 0 && (
+          <div>
+            <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Top Improvement Opportunities (Mobile)
+            </h4>
+            <div className="space-y-2">
+              {site.mobileAudit.opportunities.slice(0, 5).map((opp: any, idx: number) => (
+                <div key={idx} className="flex items-start gap-2 text-sm p-2 bg-muted/50 rounded">
+                  <div className="flex-1">
+                    <div className="font-medium">{opp.title}</div>
+                    {opp.displayValue && (
+                      <div className="text-xs text-muted-foreground mt-1">{opp.displayValue}</div>
+                    )}
+                  </div>
+                  {opp.numericValue && (
+                    <Badge variant="secondary" className="text-xs">
+                      {(opp.numericValue / 1000).toFixed(1)}s
+                    </Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Diagnostics */}
+        {site.mobileAudit?.diagnostics && site.mobileAudit.diagnostics.length > 0 && (
+          <div>
+            <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              Diagnostics (Mobile)
+            </h4>
+            <div className="space-y-2">
+              {site.mobileAudit.diagnostics.slice(0, 3).map((diag: any, idx: number) => (
+                <div key={idx} className="text-sm p-2 bg-muted/50 rounded">
+                  <div className="font-medium">{diag.title}</div>
+                  {diag.displayValue && (
+                    <div className="text-xs text-muted-foreground mt-1">{diag.displayValue}</div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         )}

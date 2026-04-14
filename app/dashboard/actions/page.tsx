@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { ManualActionsGrid } from '@/components/actions/manual-actions-grid'
 
 export const metadata = {
@@ -7,7 +7,7 @@ export const metadata = {
 }
 
 export default async function ActionsPage() {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   const { data: websites } = await supabase
     .from('websites')

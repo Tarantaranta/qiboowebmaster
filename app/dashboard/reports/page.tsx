@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { FileText, Download, Mail, Calendar } from 'lucide-react'
@@ -9,7 +9,7 @@ import { ScheduledReports } from '@/components/reports/scheduled-reports'
 export const dynamic = 'force-dynamic'
 
 export default async function ReportsPage() {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   // Get all websites
   const { data: websites } = await supabase

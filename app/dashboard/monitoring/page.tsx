@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -25,7 +25,7 @@ interface SystemStatus {
 }
 
 export default async function MonitoringPage() {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   // Check database connectivity
   const dbStart = Date.now()
